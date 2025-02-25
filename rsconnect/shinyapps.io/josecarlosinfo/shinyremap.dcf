@@ -1,0 +1,12 @@
+name: shinyremap
+title: shinyremap
+username: josecarlosinfo
+account: josecarlosinfo
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 14097450
+bundleId:
+url: https://josecarlosinfo.shinyapps.io/shinyremap/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE
