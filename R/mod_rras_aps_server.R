@@ -357,6 +357,7 @@ mod_rras_aps_server <- function(id, data_list) {
       total_nascidos <- round(sum(filtered_data()[["NASCIDOS VIVOS 2023"]], na.rm = TRUE))
       div(
         class = "custom-box box-primary",
+        style = "height:125px; display:flex; flex-direction:column; justify-content:center; align-items:center;",
         h4("Total de Nascidos Vivos (2023)"),
         h3(total_nascidos)
       )
@@ -366,6 +367,7 @@ mod_rras_aps_server <- function(id, data_list) {
       total_sus_nasc <- sum(filtered_data()[["TOTAL DE NASCIDOS VIVOS SUSDEPENDENTES ESTIMADOS"]], na.rm = TRUE)
       div(
         class = "custom-box box-success",
+        style = "height:125px; display:flex; flex-direction:column; justify-content:center; align-items:center;",
         h4("Total de nascidos vivos SUSdependentes estimados/ano"),
         h3(ceiling(total_sus_nasc))
       )
@@ -375,6 +377,7 @@ mod_rras_aps_server <- function(id, data_list) {
       total_ubs <- sum(filtered_data()[["Nº DE UBS"]], na.rm = TRUE)
       div(
         class = "custom-box box-danger",
+        style = "height:125px; display:flex; flex-direction:column; justify-content:center; align-items:center;",
         h4("Total de UBS"),
         h3(total_ubs)
       )
@@ -384,6 +387,7 @@ mod_rras_aps_server <- function(id, data_list) {
       total_gestantes <- sum(filtered_data()[["TOTAL DE GESTANTES SUSDEPENDENTES ESTIMADAS"]], na.rm = TRUE)
       div(
         class = "custom-box box-warning",
+        style = "height:125px; display:flex; flex-direction:column; justify-content:center; align-items:center;",
         h4("Total de gestantes SUSdependentes estimadas/ano"),
         h3(ceiling(total_gestantes))
       )
@@ -396,6 +400,7 @@ mod_rras_aps_server <- function(id, data_list) {
       metric <- round(mean(data$`COBERTURA ANS %`, na.rm = TRUE), 2)
       div(
         class = "custom-box box-primary",
+        style = "height:125px; display:flex; flex-direction:column; justify-content:center; align-items:center;",
         h4("Cobertura ANS (%)"),
         h3(metric)
       )
@@ -407,6 +412,7 @@ mod_rras_aps_server <- function(id, data_list) {
       metric <- round(mean(data$`COBERTURA DA ESF/MUNICÍPIO %`, na.rm = TRUE), 2)
       div(
         class = "custom-box box-success",
+        style = "height:125px; display:flex; flex-direction:column; justify-content:center; align-items:center;",
         h4("Cobertura ESF (%)"),
         h3(metric)
       )
@@ -418,6 +424,7 @@ mod_rras_aps_server <- function(id, data_list) {
       metric <- round(mean(data$`COBERTURA DA AB/MUNICÍPIO %`, na.rm = TRUE), 2)
       div(
         class = "custom-box box-warning",
+        style = "height:125px; display:flex; flex-direction:column; justify-content:center; align-items:center;",
         h4("Cobertura AB (%)"),
         h3(metric)
       )
