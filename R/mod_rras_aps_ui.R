@@ -33,7 +33,7 @@ mod_rras_aps_ui <- function(id) {
       column(width = 3, shinycssloaders::withSpinner(uiOutput(ns("summary_box_4"))))
     ),
     br(),
-    # Caixas extras para nível MUNICÍPIO
+    # Caixas extras para nível MUNICIPIO
     conditionalPanel(
       condition = sprintf("input['%s'] == 'MUNICIPIO'", ns("nivel_selection")),
       fluidRow(
@@ -42,25 +42,38 @@ mod_rras_aps_ui <- function(id) {
         column(width = 3, shinycssloaders::withSpinner(uiOutput(ns("extra_summary_box_3"))))
       )
     ),
-    # Cards com gráficos para os demais níveis
+    # Cards com gráficos para níveis que não sejam MUNICIPIO
     conditionalPanel(
       condition = sprintf("input['%s'] != 'MUNICIPIO'", ns("nivel_selection")),
+      # Primeira linha: os 3 primeiros gráficos (nascidos vivos, UBS, gestantes)
       fluidRow(
         column(width = 4, uiOutput(ns("card_plot_nascidos_vivos"))),
         column(width = 4, uiOutput(ns("card_plot_ubs"))),
         column(width = 4, uiOutput(ns("card_plot_gestantes_susdependentes")))
       ),
       br(),
-      fluidRow(
-        column(width = 6, offset = 3, uiOutput(ns("card_plot_nascidos_susdependentes")))
-        # ,
-        # column(width = 4, uiOutput(ns("card_plot_cobertura_ans"))),
-        # column(width = 4, uiOutput(ns("card_plot_cobertura_ab")))
+      # Se o nível for ESTADUAL, exibe abaixo, centralizado, o gráfico de Nascidos Vivos SUSdependentes (output único para ESTADUAL)
+      conditionalPanel(
+        condition = sprintf("input['%s'] == 'ESTADUAL'", ns("nivel_selection")),
+        fluidRow(
+          column(width = 6, offset = 3, uiOutput(ns("card_plot_nascidos_susdependentes_estadual")))
+        )
       ),
-      # br(),
-      # fluidRow(
-      #   column(width = 4, uiOutput(ns("card_plot_esf")))
-      # ),
+      # Se o nível for RRAS, DRS ou REGIÃO DE SAÚDE, exibe a segunda linha com três gráficos e abaixo o de Cobertura AB centralizado;
+      # Aqui usamos outro output para o gráfico de Nascidos Vivos SUSdependentes específico para esses níveis.
+      conditionalPanel(
+        condition = sprintf("input['%s'] == 'RRAS' || input['%s'] == 'DRS' || input['%s'] == 'REGIÃO DE SAÚDE'",
+                            ns("nivel_selection"), ns("nivel_selection"), ns("nivel_selection")),
+        fluidRow(
+          column(width = 4, uiOutput(ns("card_plot_nascidos_susdependentes_outros"))),
+          column(width = 4, uiOutput(ns("card_plot_cobertura_ans"))),
+          column(width = 4, uiOutput(ns("card_plot_cobertura_esf")))
+        ),
+        br(),
+        fluidRow(
+          column(width = 6, offset = 3, uiOutput(ns("card_plot_cobertura_ab")))
+        )
+      ),
       br(),
       br(),
       # Tabelas: cada uma em coluna separada
