@@ -201,7 +201,7 @@ load_data <- function() {
     "DRS",
     "REGIÃO DE SAÚDE",
     "MUNICIPIO",
-    "NASCIDOS VIVOS 2023",
+    "Nº NASCIDOS VIVOS",
     "COBERTURA ANS %",
     "Nº DE UBS",
     "COBERTURA ESF %",

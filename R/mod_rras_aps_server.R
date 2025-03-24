@@ -29,14 +29,21 @@ mod_rras_aps_server <- function(id, data_list) {
     }
 
     # Função auxiliar para construir o card que conterá o gráfico
-    build_plot_card <- function(card_title, plot_output_id, data_to_plot) {
+    build_plot_card <- function(card_title, plot_output_id, data_to_plot, caption = NULL) {
       n_bars <- nrow(data_to_plot)
       height_val <- calc_dynamic_height(n_bars)
       bs4Dash::bs4Card(
         title  = card_title,
         height = "100%",
         width = NULL,
-        plotly::plotlyOutput(ns(plot_output_id), height = paste0(height_val, "px"))
+        tagList(
+          # Renderiza o gráfico
+          plotly::plotlyOutput(ns(plot_output_id), height = paste0(height_val, "px")),
+          # Adiciona o texto extra, se fornecido, com margem para distanciar do eixo x
+          if (!is.null(caption)) {
+            tags$div(caption, style = "margin-top: 15px; font-size: 12px; color: #555;")
+          }
+        )
       )
     }
 
@@ -100,11 +107,17 @@ mod_rras_aps_server <- function(id, data_list) {
           marker = list(color = "#0A1E3C")
         ) |> plotly::layout(
           xaxis = c(
-            list(title = list(text = wrap_vertical_title(var_numeric), standoff = 0L)),
+            list(
+              title = list(text = wrap_vertical_title(var_numeric), standoff = 0L),
+              tickformat = "d",  # exibe o número completo (ex: 17000)
+              tickfont = list(size = 12, color = "#000000")
+            ),
             if(is_percentage) list(range = c(0, 100), dtick = 20) else list()
           ),
-          yaxis = list(title = list(text = var_category, standoff = 0L),
-                       tickfont = list(color = "#000000"))
+          yaxis = list(
+            title = list(text = var_category, standoff = 0L),
+            tickfont = list(size = 12, color = "#000000")
+          )
         )
       } else {
         # Para a orientação vertical: ajuste dos rótulos das categorias
@@ -127,11 +140,15 @@ mod_rras_aps_server <- function(id, data_list) {
             tickvals = original_categories,
             ticktext = categories,
             tickangle = 90,
-            automargin = TRUE
+            automargin = TRUE,
+            tickfont = list(size = 12, color = "#000000")
           ),
           yaxis = c(
-            list(title = list(text = wrap_after_second(var_numeric, threshold = 19), standoff = 20L, size = 1),
-                 tickfont = list(color = "#000000")),
+            list(
+              title = list(text = wrap_after_second(var_numeric, threshold = 19), standoff = 20L, size = 1),
+              tickfont = list(size = 12, color = "#000000"),
+              tickformat = "d"  # exibe o número completo
+            ),
             if(is_percentage) list(range = c(0, 100), dtick = 20) else list()
           ),
           margin = list(b = 90)
@@ -200,7 +217,7 @@ mod_rras_aps_server <- function(id, data_list) {
     # Dados para gráficos: se ESTADUAL, agregação por RRAS; caso contrário, usa os dados filtrados
     plot_data <- reactive({
       if (input$nivel_selection == "ESTADUAL") {
-        aggregate(cbind(`NASCIDOS VIVOS 2023`,
+        aggregate(cbind(`Nº NASCIDOS VIVOS`,
                         `NASCIDOS VIVOS SUSDEPENDENTES ESTIMADOS/ANO`,
                         `Nº DE UBS`,
                         `GESTANTES SUSDEPENDENTES ESTIMADAS/ANO`,
@@ -403,7 +420,7 @@ mod_rras_aps_server <- function(id, data_list) {
 
     # Caixas resumo principais
     output$summary_box_1 <- renderUI({
-      total_nascidos <- round(sum(filtered_data()[["NASCIDOS VIVOS 2023"]], na.rm = TRUE))
+      total_nascidos <- round(sum(filtered_data()[["Nº NASCIDOS VIVOS"]], na.rm = TRUE))
       div(
         class = "custom-box box-primary",
         style = "height:125px; display:flex; flex-direction:column; justify-content:center; align-items:center;",
@@ -483,30 +500,30 @@ mod_rras_aps_server <- function(id, data_list) {
     output$card_plot_nascidos_vivos <- renderUI({
       req(input$nivel_selection)
       if(input$nivel_selection == "MUNICIPIO") return(NULL)
-      build_plot_card("Nascidos Vivos", "plot_nascidos_vivos", plot_data())
+      build_plot_card("Nascidos Vivos", "plot_nascidos_vivos", plot_data(), caption = "Ano: 2023")
     })
     output$card_plot_ubs <- renderUI({
       req(input$nivel_selection)
       if(input$nivel_selection == "MUNICIPIO") return(NULL)
-      build_plot_card("Número de UBS", "plot_ubs", plot_data())
+      build_plot_card("Número de UBS", "plot_ubs", plot_data(), caption = "Ano: 2020")
     })
     output$card_plot_gestantes_susdependentes <- renderUI({
       req(input$nivel_selection)
       if(input$nivel_selection == "MUNICIPIO") return(NULL)
-      build_plot_card("Gestantes SUSdependentes", "plot_gestantes_susdependentes", plot_data())
+      build_plot_card("Gestantes SUSdependentes", "plot_gestantes_susdependentes", plot_data(), caption = "Ano: 2020")
     })
     # Para nível ESTADUAL
     output$card_plot_nascidos_susdependentes_estadual <- renderUI({
       req(input$nivel_selection)
       if(input$nivel_selection != "ESTADUAL") return(NULL)
-      build_plot_card("Nascidos Vivos SUSdependentes", "plot_nascidos_susdependentes_estado", plot_data())
+      build_plot_card("Nascidos Vivos SUSdependentes", "plot_nascidos_susdependentes_estado", plot_data(), caption = "Ano: 2020")
     })
 
     # Para níveis RRAS, DRS ou REGIÃO DE SAÚDE
     output$card_plot_nascidos_susdependentes_outros <- renderUI({
       req(input$nivel_selection)
       if(!(input$nivel_selection %in% c("RRAS", "DRS", "REGIÃO DE SAÚDE"))) return(NULL)
-      build_plot_card("Nascidos Vivos SUSdependentes", "plot_nascidos_susdependentes_outros", plot_data())
+      build_plot_card("Nascidos Vivos SUSdependentes", "plot_nascidos_susdependentes_outros", plot_data(), caption = "Ano: 2020")
     })
 
 
@@ -514,17 +531,17 @@ mod_rras_aps_server <- function(id, data_list) {
     output$card_plot_cobertura_ans <- renderUI({
       req(input$nivel_selection)
       if(!(input$nivel_selection %in% c("RRAS", "DRS", "REGIÃO DE SAÚDE"))) return(NULL)
-      build_plot_card("Cobertura ANS (%)", "plot_cobertura_ans", plot_data())
+      build_plot_card("Cobertura ANS (%)", "plot_cobertura_ans", plot_data(), caption = "Ano: 2020")
     })
     output$card_plot_cobertura_esf <- renderUI({
       req(input$nivel_selection)
       if(!(input$nivel_selection %in% c("RRAS", "DRS", "REGIÃO DE SAÚDE"))) return(NULL)
-      build_plot_card("Cobertura ESF (%)", "plot_cobertura_esf", plot_data())
+      build_plot_card("Cobertura ESF (%)", "plot_cobertura_esf", plot_data(), caption = "Ano: 2020")
     })
     output$card_plot_cobertura_ab <- renderUI({
       req(input$nivel_selection)
       if(!(input$nivel_selection %in% c("RRAS", "DRS", "REGIÃO DE SAÚDE"))) return(NULL)
-      build_plot_card("Cobertura AB (%)", "plot_cobertura_ab", plot_data())
+      build_plot_card("Cobertura AB (%)", "plot_cobertura_ab", plot_data(), caption = "Ano: 2020")
     })
 
     # Renderização dos gráficos utilizando a função auxiliar build_bar_plot
@@ -533,7 +550,7 @@ mod_rras_aps_server <- function(id, data_list) {
       if(input$nivel_selection == "MUNICIPIO") return(NULL)
       # Se estadual, a variável categórica é RRAS; caso contrário, MUNICIPIO
       cat_var <- if(input$nivel_selection == "ESTADUAL") "RRAS" else "MUNICIPIO"
-      build_bar_plot(data = plot_data(), var_numeric = "NASCIDOS VIVOS 2023", var_category = cat_var)
+      build_bar_plot(data = plot_data(), var_numeric = "Nº NASCIDOS VIVOS", var_category = cat_var)
     })
     output$plot_ubs <- plotly::renderPlotly({
       req(input$nivel_selection)
