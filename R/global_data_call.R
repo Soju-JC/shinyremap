@@ -196,7 +196,7 @@ load_data <- function() {
   colnames(tabela_APS) <- toupper(c(
     "DRS",
     "REGIÃO DE SAÚDE",
-    "MUNICIPIO",
+    "MUNICIPAL",
     "Nº DE NASCIDOS VIVOS",
     "COBERTURA ANS %",
     "Nº DE UBS",
@@ -210,10 +210,10 @@ load_data <- function() {
   ))
 
   # Converter para numérico todas as colunas que devem ser somadas
-  # Mantendo como caracteres as colunas: DRS, REGIÃO DE SAÚDE, MUNICIPIO, RRAS, COORDENADORIA DE SAÚDE e SUPERVISÃO DE SAUDE
+  # Mantendo como caracteres as colunas: DRS, REGIÃO DE SAÚDE, MUNICIPAL, RRAS, COORDENADORIA DE SAÚDE e SUPERVISÃO DE SAUDE
   tabela_APS <- tabela_APS %>%
     dplyr::mutate(across(
-      .cols = -c("DRS", "REGIÃO DE SAÚDE", "MUNICIPIO", "RRAS", "COORDENADORIA DE SAÚDE", "SUPERVISÃO DE SAÚDE"),
+      .cols = -c("DRS", "REGIÃO DE SAÚDE", "MUNICIPAL", "RRAS", "COORDENADORIA DE SAÚDE", "SUPERVISÃO DE SAÚDE"),
       .fns = ~ as.numeric(.)
     ))
 

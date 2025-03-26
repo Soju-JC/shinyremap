@@ -5,7 +5,7 @@ account: josecarlosinfo
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 14097450
-bundleId: 9945000
+bundleId: 10005552
 url: https://josecarlosinfo.shinyapps.io/shinyremap/
 version: 1
 asMultiple: FALSE

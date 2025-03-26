@@ -8,6 +8,17 @@
 mod_rras_aps_ui <- function(id) {
   ns <- shiny::NS(id)
   tagList(
+    # Título da tela de Atenção Primária à Saúde
+    fluidRow(
+      column(
+        width = 12,
+        tags$div(
+          class = "panel-title-custom",
+          "Atenção Primária à Saúde"
+        ),
+        tags$p("", style = "font-size: 20px; font-weight: bold; text-align: center;")
+      )
+    ),
     # Filtros de seleção (mantidos no topo)
     fluidRow(
       column(
@@ -15,7 +26,7 @@ mod_rras_aps_ui <- function(id) {
         selectInput(
           inputId = ns("nivel_selection"),
           label = "Selecione o nível de análise:",
-          choices = c("ESTADUAL", "RRAS", "DRS", "REGIÃO DE SAÚDE", "MUNICIPIO"),
+          choices = c("ESTADUAL", "RRAS", "DRS", "REGIÃO DE SAÚDE", "MUNICIPAL"),
           selected = "ESTADUAL"
         )
       ),
@@ -50,18 +61,18 @@ mod_rras_aps_ui <- function(id) {
       column(width = 3, shinycssloaders::withSpinner(uiOutput(ns("summary_box_2"))))
     ),
     br(),
-    # Caixas extras para nível MUNICIPIO
+    # Caixas extras para nível MUNICIPAL
     conditionalPanel(
-      condition = sprintf("input['%s'] == 'MUNICIPIO'", ns("nivel_selection")),
+      condition = sprintf("input['%s'] == 'MUNICIPAL'", ns("nivel_selection")),
       fluidRow(
         column(width = 3, shinycssloaders::withSpinner(uiOutput(ns("extra_summary_box_1")))),
         column(width = 3, shinycssloaders::withSpinner(uiOutput(ns("extra_summary_box_2")))),
         column(width = 3, shinycssloaders::withSpinner(uiOutput(ns("extra_summary_box_3"))))
       )
     ),
-    # Bloco para os gráficos quando nível não for MUNICIPIO
+    # Bloco para os gráficos quando nível não for MUNICIPAL
     conditionalPanel(
-      condition = sprintf("input['%s'] != 'MUNICIPIO'", ns("nivel_selection")),
+      condition = sprintf("input['%s'] != 'MUNICIPAL'", ns("nivel_selection")),
       # Primeira linha: os três primeiros gráficos
       fluidRow(
         column(width = 4, uiOutput(ns("card_plot_nascidos_vivos"))),
@@ -78,8 +89,10 @@ mod_rras_aps_ui <- function(id) {
       ),
       # Bloco para RRAS, DRS e REGIÃO DE SAÚDE com tratamento especial para RRAS 6 ou para São Paulo
       conditionalPanel(
-        condition = sprintf("(input['%s'] == 'RRAS' && input['%s'] == 'RRAS 6') || (input['%s'] == 'DRS' && input['%s'] == 'SIM') || input['%s'] == 'REGIÃO DE SAÚDE' && input['%s'] == 'SÃO PAULO'",
-                            ns("nivel_selection"), ns("secondary_filter"), ns("nivel_selection"), ns("analisar_sp"), ns("nivel_selection"), ns("secondary_filter")),
+        condition = sprintf("(input['%s'] == 'RRAS' && input['%s'] == 'RRAS 6') || (input['%s'] == 'DRS' && input['%s'] == 'SIM') || (input['%s'] == 'REGIÃO DE SAÚDE' && input['%s'] == 'SÃO PAULO')",
+                            ns("nivel_selection"), ns("secondary_filter"),
+                            ns("nivel_selection"), ns("analisar_sp"),
+                            ns("nivel_selection"), ns("secondary_filter")),
         fluidRow(
           column(width = 4, uiOutput(ns("card_plot_nascidos_susdependentes_rras6"))),
           column(width = 4, uiOutput(ns("card_plot_cobertura_ans_rras6"))),
@@ -87,8 +100,10 @@ mod_rras_aps_ui <- function(id) {
         )
       ),
       conditionalPanel(
-        condition = sprintf("((input['%s'] == 'RRAS' && input['%s'] != 'RRAS 6') || input['%s'] == 'DRS' && input['%s'] == 'NÃO') || input['%s'] == 'REGIÃO DE SAÚDE' && input['%s'] != 'SÃO PAULO'",
-                            ns("nivel_selection"), ns("secondary_filter"), ns("nivel_selection"), ns("analisar_sp"), ns("nivel_selection"), ns("secondary_filter")),
+        condition = sprintf("((input['%s'] == 'RRAS' && input['%s'] != 'RRAS 6') || (input['%s'] == 'DRS' && input['%s'] == 'NÃO')) || (input['%s'] == 'REGIÃO DE SAÚDE' && input['%s'] != 'SÃO PAULO')",
+                            ns("nivel_selection"), ns("secondary_filter"),
+                            ns("nivel_selection"), ns("analisar_sp"),
+                            ns("nivel_selection"), ns("secondary_filter")),
         fluidRow(
           column(width = 4, uiOutput(ns("card_plot_nascidos_susdependentes_outros"))),
           column(width = 4, uiOutput(ns("card_plot_cobertura_ans"))),
@@ -109,6 +124,7 @@ mod_rras_aps_ui <- function(id) {
             title  = "Estabelecimentos de Referência para AAE (AGAR)",
             height = "100%",
             width = NULL,
+            collapsible = FALSE,   # Desativa o recurso de minimizar
             DT::DTOutput(ns("table_aae"))
           )
         ),
@@ -119,6 +135,7 @@ mod_rras_aps_ui <- function(id) {
             title  = "Estabelecimentos de Referência para Parto (Baixo Risco)",
             height = "100%",
             width = NULL,
+            collapsible = FALSE,   # Desativa o recurso de minimizar
             DT::DTOutput(ns("table_bxr"))
           )
         )

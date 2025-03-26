@@ -14,8 +14,7 @@ mod_home_ui <- function(id) {
         tags$div(
           class = "panel-title-custom",
           "Painel ReMaP"
-        ),
-        tags$p("", style = "font-size: 18px; text-align: center;")
+        )
       )
     ),
     # Texto informativo centralizado com margens iguais
