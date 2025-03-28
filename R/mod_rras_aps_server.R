@@ -330,6 +330,7 @@ mod_rras_aps_server <- function(id, data_list) {
     #   }
     # })
 
+    # Plot geral sem dor de cabeça com SP
     plot_data <- reactive({
       level <- input$nivel_selection
       if (level == "ESTADUAL") {
@@ -353,6 +354,80 @@ mod_rras_aps_server <- function(id, data_list) {
         filtered_data()
       }
     })
+
+    # Plot considerando SP (menos cobertura ESF) ao adicionae a linha com seus totais
+    plot_data_main <- reactive({
+      level <- input$nivel_selection
+      if (level == "DRS" && (!is.null(input$analisar_sp) && input$analisar_sp == "NÃO")) {
+        df <- tabela_APS[tabela_APS$DRS == input$secondary_filter, ]
+        if (input$secondary_filter == "GRANDE SÃO PAULO") {
+          # Agrega por município para os demais (SP é deletada pelo agg)
+          agg <- aggregate(cbind(`Nº DE NASCIDOS VIVOS`,
+                                 `NASCIDOS VIVOS SUSDEPENDENTES ESTIMADOS/ANO`,
+                                 `Nº DE UBS`,
+                                 `GESTANTES SUSDEPENDENTES ESTIMADAS/ANO`,
+                                 `COBERTURA ANS %`,
+                                 `COBERTURA ESF %`,
+                                 `COBERTURA AB %`) ~ MUNICIPAL,
+                           data = df, FUN = sum, na.rm = TRUE)
+          # Converte a coluna MUNICIPAL para character
+          agg$MUNICIPAL <- as.character(agg$MUNICIPAL)
+          # Se a linha "SÃO PAULO" não estiver presente, cria-a agregando todas as linhas correspondentes
+          if (!("SÃO PAULO" %in% agg$MUNICIPAL)) {
+            df2 <- df[df$MUNICIPAL == "SÃO PAULO", ] # Subset só da cidade de SP
+            total_sp <- data_list$total_sp # Carrega linha de totais de SP
+            # Valors da planilha estão com separador decimal em vírgula (passa pra ponto)
+            total_sp$`COBERTURA ANS %` <- as.numeric(gsub(",", ".", total_sp$`COBERTURA ANS %`))
+            total_sp$`COBERTURA AB %` <- as.numeric(gsub(",", ".", total_sp$`COBERTURA AB %`))
+
+            # Define dataframe dos totais de SP
+            sp <- data.frame(
+              MUNICIPAL = "SÃO PAULO",
+              `Nº DE NASCIDOS VIVOS` = sum(df2$`Nº DE NASCIDOS VIVOS`, na.rm = TRUE),
+              `NASCIDOS VIVOS SUSDEPENDENTES ESTIMADOS/ANO` = sum(df2$`NASCIDOS VIVOS SUSDEPENDENTES ESTIMADOS/ANO`, na.rm = TRUE),
+              `Nº DE UBS` = sum(df2$`Nº DE UBS`, na.rm = TRUE),
+              `GESTANTES SUSDEPENDENTES ESTIMADAS/ANO` = sum(df2$`GESTANTES SUSDEPENDENTES ESTIMADAS/ANO`, na.rm = TRUE),
+              `COBERTURA ANS %` = sum(total_sp$`COBERTURA ANS %`, na.rm = TRUE),
+              `COBERTURA ESF %` = sum(df$`COBERTURA ESF %`, na.rm = TRUE),
+              `COBERTURA AB %` = sum(total_sp$`COBERTURA AB %`, na.rm = TRUE),
+              stringsAsFactors = FALSE
+            )
+            # Se necessário, alinhe os nomes
+            names(sp) <- names(agg)
+            agg <- rbind(agg, sp) # Adiciona a linha de SP ao dataframe agregado
+          }
+          agg
+        } else {
+          aggregate(cbind(`Nº DE NASCIDOS VIVOS`,
+                          `NASCIDOS VIVOS SUSDEPENDENTES ESTIMADOS/ANO`,
+                          `Nº DE UBS`,
+                          `GESTANTES SUSDEPENDENTES ESTIMADAS/ANO`,
+                          `COBERTURA ANS %`,
+                          `COBERTURA ESF %`,
+                          `COBERTURA AB %`) ~ MUNICIPAL,
+                    data = df, FUN = sum, na.rm = TRUE)
+        }
+      } else if (level == "ESTADUAL") {
+        aggregate(cbind(`Nº DE NASCIDOS VIVOS`,
+                        `NASCIDOS VIVOS SUSDEPENDENTES ESTIMADOS/ANO`,
+                        `Nº DE UBS`,
+                        `GESTANTES SUSDEPENDENTES ESTIMADAS/ANO`) ~ RRAS,
+                  data = tabela_APS, FUN = sum, na.rm = TRUE)
+      } else {
+        filtered_data()
+      }
+    })
+
+    # Plot para não considerar SP (casos específicos como a cobertura ESF, onde SP não possui dados)
+    plot_data_cov <- reactive({
+      df <- plot_data_main()
+      # Se a DRS selecionada for GRANDE SÃO PAULO, remove a linha "SÃO PAULO" para os gráficos de cobertura
+      if (input$nivel_selection == "DRS" && input$secondary_filter == "GRANDE SÃO PAULO") {
+        df <- dplyr::filter(df, MUNICIPAL != "SÃO PAULO")
+      }
+      df
+    })
+
 
     # Dados para tabelas de AAE
     filtered_data_aae <- reactive({
@@ -857,7 +932,7 @@ mod_rras_aps_server <- function(id, data_list) {
       } else {
         cat_var <- if(input$nivel_selection == "ESTADUAL") "RRAS" else "MUNICIPAL"
       }
-      build_bar_plot(data = plot_data(), var_numeric = "Nº DE NASCIDOS VIVOS", var_category = cat_var, force_vertical = force_v)
+      build_bar_plot(data = plot_data_main(), var_numeric = "Nº DE NASCIDOS VIVOS", var_category = cat_var, force_vertical = force_v)
     })
     output$plot_ubs <- plotly::renderPlotly({
       req(input$nivel_selection)
@@ -871,7 +946,7 @@ mod_rras_aps_server <- function(id, data_list) {
       } else {
         cat_var <- if(input$nivel_selection == "ESTADUAL") "RRAS" else "MUNICIPAL"
       }
-      build_bar_plot(data = plot_data(), var_numeric = "Nº DE UBS", var_category = cat_var, force_vertical = force_v)
+      build_bar_plot(data = plot_data_main(), var_numeric = "Nº DE UBS", var_category = cat_var, force_vertical = force_v)
     })
     output$plot_gestantes_susdependentes <- plotly::renderPlotly({
       req(input$nivel_selection)
@@ -885,7 +960,7 @@ mod_rras_aps_server <- function(id, data_list) {
       } else {
         cat_var <- if(input$nivel_selection == "ESTADUAL") "RRAS" else "MUNICIPAL"
       }
-      build_bar_plot(data = plot_data(), var_numeric = "GESTANTES SUSDEPENDENTES ESTIMADAS/ANO", var_category = cat_var, force_vertical = force_v)
+      build_bar_plot(data = plot_data_main(), var_numeric = "GESTANTES SUSDEPENDENTES ESTIMADAS/ANO", var_category = cat_var, force_vertical = force_v)
     })
     output$plot_nascidos_susdependentes_estado <- plotly::renderPlotly({
       req(input$nivel_selection)
@@ -905,7 +980,7 @@ mod_rras_aps_server <- function(id, data_list) {
       } else {
         cat_var <- if(input$nivel_selection == "ESTADUAL") "RRAS" else "MUNICIPAL"
       }
-      build_bar_plot(data = plot_data(), var_numeric = "NASCIDOS VIVOS SUSDEPENDENTES ESTIMADOS/ANO", var_category = cat_var)
+      build_bar_plot(data = plot_data_main(), var_numeric = "NASCIDOS VIVOS SUSDEPENDENTES ESTIMADOS/ANO", var_category = cat_var)
     })
     # RRAS 6
     output$plot_nascidos_susdependentes_rras6 <- plotly::renderPlotly({
@@ -927,17 +1002,17 @@ mod_rras_aps_server <- function(id, data_list) {
     output$plot_cobertura_ans <- plotly::renderPlotly({
       req(input$nivel_selection)
       if(!(input$nivel_selection %in% c("RRAS", "DRS", "REGIÃO DE SAÚDE"))) return(NULL)
-      build_bar_plot(data = plot_data(), var_numeric = "COBERTURA ANS %", var_category = "MUNICIPAL", is_percentage = TRUE)
+      build_bar_plot(data = plot_data_main(), var_numeric = "COBERTURA ANS %", var_category = "MUNICIPAL", is_percentage = TRUE)
     })
     output$plot_cobertura_esf <- plotly::renderPlotly({
       req(input$nivel_selection)
       if(!(input$nivel_selection %in% c("RRAS", "DRS", "REGIÃO DE SAÚDE"))) return(NULL)
-      build_bar_plot(data = plot_data(), var_numeric = "COBERTURA ESF %", var_category = "MUNICIPAL", is_percentage = TRUE)
+      build_bar_plot(data = plot_data_cov(), var_numeric = "COBERTURA ESF %", var_category = "MUNICIPAL", is_percentage = TRUE)
     })
     output$plot_cobertura_ab <- plotly::renderPlotly({
       req(input$nivel_selection)
       if(!(input$nivel_selection %in% c("RRAS", "DRS", "REGIÃO DE SAÚDE"))) return(NULL)
-      build_bar_plot(data = plot_data(), var_numeric = "COBERTURA AB %", var_category = "MUNICIPAL", is_percentage = TRUE)
+      build_bar_plot(data = plot_data_main(), var_numeric = "COBERTURA AB %", var_category = "MUNICIPAL", is_percentage = TRUE)
     })
     # GRÁFICOS DE COBERTURA (para RRAS 6)
     output$plot_cobertura_ans_rras6 <- plotly::renderPlotly({
